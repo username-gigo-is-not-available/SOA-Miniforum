@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: ${ZOOKEEPER_CONTAINER_NAME}
+    ports:
+      - "${ZOOKEEPER_PORT_NUMBER}:2181"
+    networks:
+      - kafka-network
+    env_file:
+      - .env
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: ${KAFKA_CONTAINER_NAME}
+    ports:
+      - "${KAFKA_PORT_NUMBER}:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_CONTAINER_NAME}
+      KAFKA_ZOOKEEPER_CONNECT: ${ZOOKEEPER_CONTAINER_NAME}:${ZOOKEEPER_PORT_NUMBER}
+      KAFKA_CREATE_TOPICS: "${POST_CREATED_TOPIC}:1:1,${POST_DELETED_TOPIC}:1:1,${GET_COMMENTS_FOR_POST_TOPIC}:1:1,${LIST_ALL_POSTS_TOPIC}:1:1"
+    healthcheck:
+      test: nc -z kafka 9092 || exit -1
+      start_period: 20s
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    restart: always
+    networks:
+      - kafka-network
+    env_file:
+      - .env
+
+  posts-service:
+    container_name: ${POSTS_SERVICE_CONTAINER_NAME}
+    build:
+      context: ./posts_service
+      dockerfile: Dockerfile
+    ports:
+      - "${POSTS_SERVICE_PORT_NUMBER}:80"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      posts-service-mongodb:
+        condition: service_healthy
+    env_file:
+      - /posts_service/.env
+    restart: always
+    networks:
+      - posts-service-network
+      - kafka-network
+
+  posts-service-mongodb:
+    container_name: ${POSTS_SERVICE_MONGODB_CONTAINER_NAME}
+    image: mongo:latest
+    ports:
+      - "${POSTS_SERVICE_MONGODB_PORT_NUMBER}:27017"
+    environment:
+      - TZ=UTC
+    volumes:
+      - posts-service-volume:/data/db
+    env_file:
+      - /posts_service/.env
+    healthcheck:
+      test: [ "CMD","mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - posts-service-network
+
+  comments-service:
+    container_name: ${COMMENTS_SERVICE_CONTAINER_NAME}
+    build:
+      context: ./comments_service
+      dockerfile: Dockerfile
+    ports:
+      - "${COMMENTS_SERVICE_PORT_NUMBER}:80"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      comments-service-mongodb:
+        condition: service_healthy
+    env_file:
+      - /comments_service/.env
+    restart: always
+    networks:
+      - comments-service-network
+      - kafka-network
+
+  comments-service-mongodb:
+    container_name: ${COMMENTS_SERVICE_MONGODB_CONTAINER_NAME}
+    image: mongo:latest
+    ports:
+      - "${COMMENTS_SERVICE_MONGODB_PORT_NUMBER}:27017"
+    environment:
+      - TZ=UTC
+    volumes:
+      - comments-service-volume:/data/db
+    env_file:
+      - /comments_service/.env
+    healthcheck:
+      test: [ "CMD","mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - comments-service-network
+
+networks:
+  posts-service-network:
+    driver: bridge
+  comments-service-network:
+    driver: bridge
+  kafka-network:
+    driver: bridge
+
+volumes:
+  posts-service-volume:
+  comments-service-volume:
+
