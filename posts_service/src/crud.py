@@ -9,6 +9,7 @@ from src.schemas import PostUpdate, PostCreate
 from src.exceptions import *
 from src.pubsub.producer import *
 from src.serializers import post_serializer
+from src.settings import *
 
 SORT_BY_TIMESTAMP_ASC: list[tuple[str, int]] = [('timestamp', -1)]
 
@@ -22,6 +23,7 @@ async def create(post: PostCreate, collection: AsyncIOMotorCollection) -> Post:
     if (inserted_post := await get(post_id=result.inserted_id, collection=collection)) is not None:
         logger.info(f"Inserted post: {inserted_post}")
         data = json.dumps(post_serializer(post=inserted_post)).encode('utf-8')
+        logger.info(f"Sending key: {inserted_post.dict()['id']} value: {inserted_post.dict()} to topic: {POST_CREATED_TOPIC}")
         await get_producer().send(topic=POST_CREATED_TOPIC,
                                   value=data
                                   )
@@ -55,7 +57,8 @@ async def update(post_id: str, post: PostUpdate, collection: AsyncIOMotorCollect
 async def delete(post_id: str, collection: AsyncIOMotorCollection) -> Post:
     if (result := await collection.find_one_and_delete({"_id": ObjectId(post_id)})) is not None:
         logger.info(f"Deleted post: {result}")
-        data = json.dumps(post_serializer(post=result)).encode('utf-8')
+        data = json.dumps(post_serializer(post=Post(**result))).encode('utf-8')
+        logger.info(f"Sending key: {result['_id']} value: {result} to topic: {POST_DELETED_TOPIC}")
         await get_producer().send(topic=POST_DELETED_TOPIC,
                                   value=data
                                   )
@@ -84,9 +87,8 @@ async def count(collection: AsyncIOMotorCollection,
         raise HTTPException(status_code=404, detail=no_active_posts_message())
 
 
-async def posts_by_user(user_id: int, collection: AsyncIOMotorCollection,
-                        parameters: tuple[int, int, list[tuple[str, int]] | None, dict[str, Any] | None]) -> list[Post]:
-    offset, limit, order_by, where = parameters
+async def posts_by_user(user_id: int, collection: AsyncIOMotorCollection) -> list[Post]:
+    offset, limit, order_by, where = DEFAULT_PARAMETERS
     where = {"user_id": user_id}
     if (result := await query(collection=collection, parameters=(offset, limit, order_by, where))) is not None:
         logger.info(posts_by_user_message(user_id=user_id, posts=result))
@@ -95,10 +97,10 @@ async def posts_by_user(user_id: int, collection: AsyncIOMotorCollection,
         raise HTTPException(status_code=404, detail=user_has_not_posted_yet_message(user_id=user_id))
 
 
-async def count_posts_by_user(user_id: int, collection: AsyncIOMotorCollection,
-                              parameters: tuple[int, int, list[tuple[str, int]] | None, dict[str, Any] | None]) -> int:
-    if (result := await posts_by_user(user_id=user_id, collection=collection, parameters=parameters)) is not None:
+async def posts_by_user_count(user_id: int, collection: AsyncIOMotorCollection) -> int:
+    if (result := await posts_by_user(user_id=user_id, collection=collection)) is not None:
         logger.info(count_posts_by_user_message(user_id=user_id, total_posts=len(result)))
         return len(result)
     else:
         raise HTTPException(status_code=404, detail=user_has_not_posted_yet_message(user_id=user_id))
+

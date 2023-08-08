@@ -18,7 +18,7 @@ def post_has_no_comments_message(post_id: str):
 
 
 def count_posts_by_user_message(user_id: int, total_posts: int):
-    return f"User with f{user_id} has total of {total_posts} posts!"
+    return f"User with {user_id} has total of {total_posts} posts!"
 
 
 def posts_by_user_message(user_id: int, posts: list[Post]):

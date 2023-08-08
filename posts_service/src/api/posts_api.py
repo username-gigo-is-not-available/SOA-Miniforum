@@ -28,23 +28,6 @@ async def delete_post(post_id: str, collection: AsyncIOMotorCollection = Depends
     return await delete(post_id=post_id, collection=collection)
 
 
-@router.post("/count", response_model=int)
-async def count_number_of_posts(
-        parameters: tuple[int, int, list[tuple[str, int]] | None, dict[str, Any] | None] = DEFAULT_PARAMETERS,
-        collection: AsyncIOMotorCollection = Depends(get_collection),
-        ):
-    return await count(collection=collection, parameters=parameters)
-
-
-@router.post("/users/{user_id}", response_model=list[Post])
-async def get_posts_by_user(user_id: int,
-                            parameters: tuple[
-                                int, int, list[tuple[str, int]] | None, dict[str, Any] | None] = DEFAULT_PARAMETERS,
-                            collection: AsyncIOMotorCollection = Depends(get_collection),
-                            ):
-    return await posts_by_user(user_id=user_id, collection=collection, parameters=parameters)
-
-
 @router.post("/search", response_model=list[Post])
 async def list_posts(
         parameters: tuple[int, int, list[tuple[str, int]] | None, dict[str, Any] | None] = DEFAULT_PARAMETERS,
@@ -53,10 +36,23 @@ async def list_posts(
     return await query(collection=collection, parameters=parameters)
 
 
-@router.post("/users/{user_id}/count", response_model=int)
-async def count_posts_by_user(user_id: str,
-                              parameters: tuple[
-                                  int, int, list[tuple[str, int]] | None, dict[str, Any] | None] = DEFAULT_PARAMETERS,
+@router.post("/count", response_model=int)
+async def count_number_of_posts(
+        parameters: tuple[int, int, list[tuple[str, int]] | None, dict[str, Any] | None] = DEFAULT_PARAMETERS,
+        collection: AsyncIOMotorCollection = Depends(get_collection),
+        ):
+    return await count(collection=collection, parameters=parameters)
+
+
+@router.get("/users/{user_id}", response_model=list[Post])
+async def get_posts_by_user(user_id: int,
+                            collection: AsyncIOMotorCollection = Depends(get_collection),
+                            ):
+    return await posts_by_user(user_id=user_id, collection=collection)
+
+
+@router.get("/users/{user_id}/count", response_model=int)
+async def count_posts_by_user(user_id: int,
                               collection: AsyncIOMotorCollection = Depends(get_collection),
                               ):
-    return await count_posts_by_user(user_id=user_id, collection=collection, parameters=parameters)
+    return await posts_by_user_count(user_id=user_id, collection=collection)

@@ -8,7 +8,6 @@ app = FastAPI(title="Comments Service")
 
 app.include_router(comments_router)
 
-
 @app.on_event("startup")
 async def startup_event():
     logger.info("Application startup event")

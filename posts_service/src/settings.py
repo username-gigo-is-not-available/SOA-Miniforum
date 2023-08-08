@@ -12,6 +12,13 @@ for variable_name, variable_value in environment_variables_dict.items():
     if not variable_value:
         raise RuntimeError(f"{variable_name} is not set!")
 
+POST_DELETED_TOPIC: str = environment_variables_dict["POST_DELETED_TOPIC"]
+GET_COMMENTS_FOR_POST_TOPIC: str = environment_variables_dict["GET_COMMENTS_FOR_POST_TOPIC"]
+POST_CREATED_TOPIC: str = environment_variables_dict["POST_CREATED_TOPIC"]
+LIST_ALL_POSTS_TOPIC: str = environment_variables_dict["LIST_ALL_POSTS_TOPIC"]
+
+TOPICS: list = [POST_DELETED_TOPIC, GET_COMMENTS_FOR_POST_TOPIC, POST_CREATED_TOPIC, LIST_ALL_POSTS_TOPIC]
+
 
 def set_connection_string(connection_string: str) -> str:
     for env_variable in environment_variables_list:

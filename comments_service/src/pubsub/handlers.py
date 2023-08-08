@@ -1,33 +1,46 @@
 from fastapi import Depends
 from starlette.concurrency import run_in_threadpool
-from src import crud
+
+from src import database
+from src import settings
 from src.crud import *
-from src.database import get_collection
-from src.database_models import Comment, PyObjectId
+from src.database_models import Comment
 
 
-async def log_message(topic: str, message: dict) -> str:
+def log_message(topic: str, message: dict) -> str:
     return f"Received message {message} from topic: {topic}"
 
 
+def list_all_posts_message(post_ids: list[str]):
+    return f"Listing all posts: {post_ids}"
+
+
 async def post_deleted_handler(message: dict) -> list[Comment]:
-    post_comments = await comments_by_post(post_id=message['_id'], collection=Depends(get_collection),
-                                           parameters=(0, int(2 ** 31) - 1, [], {}))
-    return [await delete(comment_id=str(comment.id), collection=get_collection) for comment in
-            post_comments]
+    logger.info(log_message(settings.POST_DELETED_TOPIC, message))
+    post_comments = await comments_by_post(post_id=str(message['id']), collection=await database.get_collection())
+    result = []
+    for comment in post_comments:
+        deleted_comment = await delete(comment_id=str(comment.id), collection=await database.get_collection())
+        result.append(deleted_comment)
+    settings.post_ids.remove(str(message['id']))
+    logger.info(list_all_posts_message(post_ids=settings.post_ids))
+    return result
 
 
 async def list_comments_by_post_handler(message: dict) -> list[Comment]:
-    return await comments_by_post(post_id=message['post_id'], collection=Depends(get_collection),
-                                  parameters=(0, int(2 ** 31) - 1, [], {}))
+    logger.info(log_message(settings.GET_COMMENTS_FOR_POST_TOPIC, message))
+    return await comments_by_post(post_id=str(message['id']), collection=await database.get_collection())
 
 
-async def post_created_handler(message: dict) -> Comment:
-    logger.info(f"Post IDs in comment service: {posts_ids}")
-    return await run_in_threadpool(crud.posts_ids.append(map(lambda x: x['_id'], message)))
+async def post_created_handler(message: dict) -> list[Comment]:
+    logger.info(log_message(settings.POST_CREATED_TOPIC, message))
+    settings.post_ids.append(str(message['id']))
+    logger.info(list_all_posts_message(post_ids=settings.post_ids))
+    return await comments_by_post(post_id=str(message['id']), collection=await database.get_collection())
 
 
-async def list_all_posts_handler(message: dict) -> list[PyObjectId]:
-    [crud.posts_ids.append(PyObjectId(value)) for key, value in message.items() if key == 'id']
-    logger.info(f"Listing all posts: {posts_ids}")
-    return crud.posts_ids
+async def list_all_posts_handler(message: dict) -> list[str]:
+    logger.info(log_message(settings.LIST_ALL_POSTS_TOPIC, message))
+    [settings.post_ids.append(str(value)) for key, value in message.items() if key == 'id']
+    logger.info(list_all_posts_message(post_ids=settings.post_ids))
+    return settings.post_ids
