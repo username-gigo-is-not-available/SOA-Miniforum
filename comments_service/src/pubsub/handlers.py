@@ -1,8 +1,5 @@
-from fastapi import Depends
-from starlette.concurrency import run_in_threadpool
-
+from fastapi.logger import logger
 from src import database
-from src import settings
 from src.crud import *
 from src.database_models import Comment
 
@@ -25,11 +22,6 @@ async def post_deleted_handler(message: dict) -> list[Comment]:
     settings.post_ids.remove(str(message['id']))
     logger.info(list_all_posts_message(post_ids=settings.post_ids))
     return result
-
-
-async def list_comments_by_post_handler(message: dict) -> list[Comment]:
-    logger.info(log_message(settings.GET_COMMENTS_FOR_POST_TOPIC, message))
-    return await comments_by_post(post_id=str(message['id']), collection=await database.get_collection())
 
 
 async def post_created_handler(message: dict) -> list[Comment]:

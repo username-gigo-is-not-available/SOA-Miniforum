@@ -74,6 +74,7 @@ async def query(collection: AsyncIOMotorCollection,
     cursor = collection.find(where).skip(offset).limit(limit)
     cursor = cursor.sort(order_by) if order_by else cursor
     result = [Post(**doc) async for doc in cursor]
+    logger.info(f"Queried posts: {result}")
     return result
 
 
