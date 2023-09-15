@@ -12,6 +12,8 @@ for variable_name, variable_value in environment_variables_dict.items():
     if not variable_value:
         raise RuntimeError(f"{variable_name} is not set!")
 
+LIST_ALL_USERS_TOPIC: str = environment_variables_dict["LIST_ALL_USERS_TOPIC"]
+
 
 def set_connection_string(connection_string: str) -> str:
     for env_variable in environment_variables_list:

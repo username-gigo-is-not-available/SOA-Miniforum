@@ -10,7 +10,7 @@ async def connect_to_redis() -> Redis:
     return await from_url(connection_string, decode_responses=True)
 
 
-async def get_db() -> Redis:
+async def get_cache() -> Redis:
     return await connect_to_redis()
 
 

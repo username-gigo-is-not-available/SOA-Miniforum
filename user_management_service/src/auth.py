@@ -18,29 +18,6 @@ KEY_IDENTIFIER = environment_variables_dict["KEY_IDENTIFIER"]
 CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-# TODO:
-# HEADER
-# {
-#   "alg": "HS256",
-#   "typ": "JWT",
-#   "kid" : "CYDqzeQ0427MfZQ7wABuYSXPxBkQpgWh"
-# }
-
-# PAYLOAD
-# {
-#   "sub": "1234567890",
-#   "name": "John Doe",
-#   "iat": 1516239022,
-#   "exp" : 1916239022
-# }
-
-# HMACSHA256(
-#     base64UrlEncode(header) + "." +
-#     base64UrlEncode(payload),
-#
-#     orYGrUbXyQ1VBFPRwnlDwakS18gOQNZI
-#
-# )
 def hash_password(password: str) -> str:
     return CONTEXT.hash(password)
 
@@ -82,7 +59,7 @@ def decode_access_token(token: str) -> User:
 
 
 async def authenticate_user(user: UserLogin, db: Redis) -> User:
-    registered_user = await find_user_by_email(email=user.email, db=db)
+    registered_user = await find_user_by_email(email=user.email, cache=db)
     if registered_user is not None and verify_password(user.password, registered_user.hashed_password):
         logger.info(f"Successfully authenticated user: {registered_user}")
         return registered_user

@@ -5,7 +5,7 @@ from starlette.responses import RedirectResponse
 
 from src.auth import login, decode_access_token
 from src.crud import create, get, update, delete, query, redirect_to_gateway
-from src.database import get_db
+from src.database import get_cache
 from src.database_models import User
 from src.schemas import UserCreate, UserUpdate
 
@@ -15,33 +15,33 @@ router = APIRouter(tags=["users"], prefix="/users")
 
 
 @router.post('/register/', response_model=User)
-async def register_user(user: UserCreate, db: Redis = Depends(get_db)):
-    return await create(user=user, db=db)
+async def register_user(user: UserCreate, cache: Redis = Depends(get_cache)):
+    return await create(user=user, cache=cache)
 
 
 @router.get("/{user_id}/", response_model=User)
-async def get_user(user_id: int, db: Redis = Depends(get_db)):
-    return await get(user_id=user_id, db=db)
+async def get_user(user_id: int, cache: Redis = Depends(get_cache)):
+    return await get(user_id=user_id, cache=cache)
 
 
 @router.put("/{user_id}/", response_model=User)
-async def update_user(user_id: int, user: UserUpdate, db: Redis = Depends(get_db)):
-    return await update(user_id=user_id, user_update=user, db=db)
+async def update_user(user_id: int, user: UserUpdate, cache: Redis = Depends(get_cache)):
+    return await update(user_id=user_id, user_update=user, cache=cache)
 
 
 @router.delete("/{user_id}/", response_model=User)
-async def delete_user(user_id: int, db: Redis = Depends(get_db)):
-    return await delete(user_id=user_id, db=db)
+async def delete_user(user_id: int, cache: Redis = Depends(get_cache)):
+    return await delete(user_id=user_id, cache=cache)
 
 
 @router.post("/search/", response_model=list[User])
-async def list_users(email_pattern: str, db: Redis = Depends(get_db)):
-    return await query(email_pattern=email_pattern, db=db)
+async def list_users(email_pattern: str | None, cache: Redis = Depends(get_cache)):
+    return await query(email_pattern=email_pattern, cache=cache)
 
 
 @router.post("/login/", response_model=dict)
-async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Redis = Depends(get_db)):
-    return await login(form_data=form_data, db=db)
+async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), cache: Redis = Depends(get_cache)):
+    return await login(form_data=form_data, db=cache)
 
 
 @router.get("/authenticated", response_model=User)

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field, validator
 
 
@@ -5,6 +7,7 @@ class User(BaseModel):
     id: int = Field(...)
     email: str = Field(...)
     hashed_password: str = Field(...)
+    timestamp: int = Field(...)
 
     @validator("email")
     def validate_email(cls, value):
