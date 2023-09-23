@@ -11,7 +11,7 @@ services:
     env_file:
       - .env
     networks:
-      - kafka-network
+      - message-broker-network
 
 
   kafka:
@@ -27,7 +27,7 @@ services:
       retries: 15
     restart: on-failure
     networks:
-      - kafka-network
+      - message-broker-network
     env_file:
       - .env
     depends_on:
@@ -35,23 +35,24 @@ services:
 
   kong:
     image: kong:latest
+    container_name: ${API_GATEWAY_CONTAINER_NAME}
     volumes:
-      - ./api_gateway/kong.yaml:/usr/local/kong/declarative/kong.yml
+      - ./api-gateway/kong.yaml:/usr/local/kong/declarative/kong.yml
     env_file:
-      - ./api_gateway/.env
+      - api-gateway/.env
     ports:
-      - "8000:8000"
+      - "${API_GATEWAY_PORT_NUMBER}:8000"
       - "8001:8001"
       - "8443:8443"
       - "8444:8444"
     networks:
-      - kong-net
+      - api-gateway-network
 
 
   user-management-service:
     container_name: ${USER_MANAGEMENT_SERVICE_CONTAINER_NAME}
     build:
-      context: ./user_management_service
+      context: user-management-service
       dockerfile: Dockerfile
     ports:
       - "${USER_MANAGEMENT_SERVICE_PORT_NUMBER}:80"
@@ -61,12 +62,12 @@ services:
       user-management-service-redis:
         condition: service_healthy
     env_file:
-      - ./user_management_service/.env
+      - user-management-service/.env
     restart: always
     networks:
       - user-management-service-network
-      - kafka-network
-      - kong-net
+      - message-broker-network
+      - api-gateway-network
 
   user-management-service-redis:
     container_name: ${USER_MANAGEMENT_SERVICE_REDIS_CONTAINER_NAME}
@@ -76,7 +77,7 @@ services:
     volumes:
       - user-service-volume:/data
     env_file:
-      - ./user_management_service/.env
+      - user-management-service/.env
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
@@ -90,7 +91,7 @@ services:
   posts-service:
     container_name: ${POSTS_SERVICE_CONTAINER_NAME}
     build:
-      context: ./posts_service
+      context: posts-service
       dockerfile: Dockerfile
     ports:
       - "${POSTS_SERVICE_PORT_NUMBER}:80"
@@ -100,12 +101,12 @@ services:
       posts-service-mongodb:
         condition: service_healthy
     env_file:
-      - ./posts_service/.env
+      - posts-service/.env
     restart: always
     networks:
       - posts-service-network
-      - kafka-network
-      - kong-net
+      - message-broker-network
+      - api-gateway-network
 
   posts-service-mongodb:
     container_name: ${POSTS_SERVICE_MONGODB_CONTAINER_NAME}
@@ -115,7 +116,7 @@ services:
     volumes:
       - posts-service-volume:/data/db
     env_file:
-      - ./posts_service/.env
+      - posts-service/.env
     healthcheck:
       test: [ "CMD","mongosh", "--eval", "db.adminCommand('ping')" ]
       interval: 5s
@@ -128,7 +129,7 @@ services:
   comments-service:
     container_name: ${COMMENTS_SERVICE_CONTAINER_NAME}
     build:
-      context: ./comments_service
+      context: comments-service
       dockerfile: Dockerfile
     ports:
       - "${COMMENTS_SERVICE_PORT_NUMBER}:80"
@@ -138,12 +139,12 @@ services:
       comments-service-mongodb:
         condition: service_healthy
     env_file:
-      - ./comments_service/.env
+      - comments-service/.env
     restart: always
     networks:
       - comments-service-network
-      - kafka-network
-      - kong-net
+      - message-broker-network
+      - api-gateway-network
 
   comments-service-mongodb:
     container_name: ${COMMENTS_SERVICE_MONGODB_CONTAINER_NAME}
@@ -153,7 +154,7 @@ services:
     volumes:
       - comments-service-volume:/data/db
     env_file:
-      - ./comments_service/.env
+      - comments-service/.env
     healthcheck:
       test: [ "CMD","mongosh", "--eval", "db.adminCommand('ping')" ]
       interval: 5s
@@ -168,11 +169,11 @@ networks:
     driver: bridge
   comments-service-network:
     driver: bridge
-  kafka-network:
+  message-broker-network:
     driver: bridge
   user-management-service-network:
     driver: bridge
-  kong-net:
+  api-gateway-network:
     driver: bridge
 
 volumes:
