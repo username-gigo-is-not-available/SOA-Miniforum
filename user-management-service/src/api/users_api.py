@@ -9,7 +9,7 @@ from src.database import get_cache
 from src.database_models import User
 from src.schemas import UserCreate, UserUpdate
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login/")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login/users/login/")
 
 router = APIRouter(tags=["users"], prefix="/users")
 

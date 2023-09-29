@@ -3,6 +3,7 @@ from aiokafka import AIOKafkaConsumer
 from fastapi.logger import logger
 from src.settings import environment_variables_dict, set_connection_string
 from src.pubsub.handlers import *
+from src.pubsub.config import *
 
 consumer: AIOKafkaConsumer | None = None
 

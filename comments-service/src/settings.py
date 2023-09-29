@@ -7,7 +7,9 @@ environment_variables_list: list = list(os.environ.keys())
 environment_variables_dict: dict = {
     env_var: os.getenv(env_var) for env_var in environment_variables_list
 }
+
 post_ids: list[str] = []
+user_ids: list[int] = []
 
 for variable_name, variable_value in environment_variables_dict.items():
     if not variable_value:

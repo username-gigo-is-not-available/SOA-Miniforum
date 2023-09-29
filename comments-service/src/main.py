@@ -4,7 +4,7 @@ from asyncio import get_event_loop
 from src.api.comments_api import router as comments_router
 from src.pubsub.consumer import *
 
-app = FastAPI(title="Comments Service")
+app = FastAPI(title="Comments Service", root_path="/comments-service")
 
 app.include_router(comments_router)
 
