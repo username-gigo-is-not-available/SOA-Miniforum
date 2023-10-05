@@ -2,7 +2,7 @@ from fastapi.logger import logger
 from src import database, settings
 from src.crud import *
 from src.database_models import Post
-import src.pubsub.config as config
+from src.pubsub import config
 
 
 def log_message(topic: str, message: dict) -> str:

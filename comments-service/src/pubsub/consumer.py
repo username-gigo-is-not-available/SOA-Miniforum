@@ -7,6 +7,15 @@ from src.pubsub.config import *
 
 consumer: AIOKafkaConsumer | None = None
 
+HANDLERS_MAP = {
+    POST_DELETED_TOPIC: post_deleted_handler,
+    POST_CREATED_TOPIC: post_created_handler,
+    LIST_ALL_POSTS_TOPIC: list_all_posts_handler,
+    USER_DELETED_TOPIC: user_deleted_handler,
+    USER_CREATED_TOPIC: user_created_handler,
+    LIST_ALL_USERS_TOPIC: list_all_users_handler
+}
+
 
 def get_consumer() -> AIOKafkaConsumer:
     global consumer
