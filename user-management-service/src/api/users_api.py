@@ -21,22 +21,23 @@ async def register_user(user: UserCreate, cache: Redis = Depends(get_cache)):
 
 
 @router.get("/{user_id}/", response_model=User)
-async def get_user(user_id: int, cache: Redis = Depends(get_cache)):
+async def get_user(user_id: int, cache: Redis = Depends(get_cache), token: str = Depends(oauth2_scheme)):
     return await get(user_id=user_id, cache=cache)
 
 
 @router.put("/{user_id}/", response_model=User)
-async def update_user(user_id: int, user: UserUpdate, cache: Redis = Depends(get_cache)):
+async def update_user(user_id: int, user: UserUpdate, cache: Redis = Depends(get_cache),
+                      token: str = Depends(oauth2_scheme)):
     return await update(user_id=user_id, user_update=user, cache=cache)
 
 
 @router.delete("/{user_id}/", response_model=User)
-async def delete_user(user_id: int, cache: Redis = Depends(get_cache)):
+async def delete_user(user_id: int, cache: Redis = Depends(get_cache), token: str = Depends(oauth2_scheme)):
     return await delete(user_id=user_id, cache=cache)
 
 
 @router.post("/search/", response_model=list[User])
-async def list_users(email_pattern: str = ".*", cache: Redis = Depends(get_cache)):
+async def list_users(email_pattern: str = ".*", cache: Redis = Depends(get_cache), token: str = Depends(oauth2_scheme)):
     return await query(email_pattern=email_pattern, cache=cache)
 
 
