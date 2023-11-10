@@ -13,14 +13,14 @@ from src.pubsub.config import *
 
 app = FastAPI(title="Posts Service", root_path="/posts-service")
 
-app.include_router(posts_router)
+app.include_router(router=posts_router)
 
 
 @app.on_event("startup")
 async def startup_event():
     logger.info("Application startup event")
     event_loop = get_event_loop()
-    event_loop.create_task(consume())
+    event_loop.create_task(consume()) 
     await get_producer().start()
     collection = await get_collection()
     posts = await query(collection=collection, parameters=DEFAULT_PARAMETERS)
@@ -42,7 +42,7 @@ async def shutdown_event():
 
 
 @app.middleware("http")
-async def validate_jwt(request: Request, call_next):
+async def validate_user(request: Request, call_next):
     # request.get("Authorization")
     print(request.headers)
     response = await call_next(request)
