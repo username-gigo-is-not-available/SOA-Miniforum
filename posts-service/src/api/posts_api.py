@@ -57,7 +57,3 @@ async def count_posts_by_user(user_id: int,
                               ):
     return await posts_by_user_count(user_id=user_id, collection=collection)
 
-
-@router.get("/example/new", response_model=None)
-async def test_(header: str | None = Header()):
-    return {"header": header}
